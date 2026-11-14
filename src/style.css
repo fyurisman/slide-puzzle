@@ -167,6 +167,16 @@ button.primary.stop {
   cursor: grabbing;
 }
 
+/* Reserved line between board and buttons, so nothing shifts when it empties. */
+.countdown {
+  min-height: 1.4em;
+  margin: -6px 0;
+  color: var(--muted);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
 .message {
   min-height: 1.2em;
   margin: 0;

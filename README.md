@@ -12,7 +12,7 @@ Everything runs in the browser. Pictures are never uploaded to a server.
 - **Drag to slide**: drag a tile next to the gap (mouse or touch). Past halfway it snaps into the gap; otherwise it springs back. A tap also moves it.
 - **Scramble**: 20 × N² random legal moves, animated at 150 ms per slide, sped up when needed so a scramble never takes more than 60 s.
 - **Solve**: a human-style solver that solves the top row, then the left column, shrinking the puzzle down to the final 2×2 corner. It plays every move at a steady 150 ms per slide.
-- While a scramble or solve is running, its button turns into **Stop**.
+- While a scramble or solve is running, its button turns into **Stop** and every other control is disabled until you press it or the run ends. A scramble shows a countdown of the seconds left.
 
 ## Development
 

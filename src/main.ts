@@ -17,6 +17,7 @@ const recropBtn = $<HTMLButtonElement>("recrop");
 const scrambleBtn = $<HTMLButtonElement>("scramble");
 const solveBtn = $<HTMLButtonElement>("solve");
 const messageEl = $<HTMLParagraphElement>("message");
+const countdownEl = $<HTMLParagraphElement>("countdown");
 
 // ---- State -----------------------------------------------------------------
 
@@ -52,14 +53,17 @@ const view = new BoardView(boardEl, {
 function startRun(kind: RunKind, moves: number[], msPerMove: number): void {
   const r: Run = { kind, stopRequested: false, done: Promise.resolve() };
   r.done = (async () => {
-    for (const cell of moves) {
+    for (let i = 0; i < moves.length; i++) {
       if (r.stopRequested) break;
+      if (kind === "scramble") showCountdown((moves.length - i) * msPerMove);
+      const cell = moves[i];
       const tileId = board[cell];
       applyMove(board, n, cell);
       await view.slide(tileId, board.indexOf(tileId), msPerMove);
     }
   })().finally(() => {
     if (run === r) run = null;
+    countdownEl.textContent = "";
     updateButtons();
   });
   run = r;
@@ -74,10 +78,21 @@ async function stopRun(): Promise<void> {
   await run.done;
 }
 
+/** Time left in the scramble, in whole seconds rounded up. */
+function showCountdown(msLeft: number): void {
+  countdownEl.textContent = `${Math.ceil(msLeft / 1000)} s`;
+}
+
 function updateButtons(): void {
+  // While a run is going, its Stop button is the only enabled control.
+  const running = run !== null;
   scrambleBtn.textContent = run?.kind === "scramble" ? "Stop" : "Scramble";
   solveBtn.textContent = run?.kind === "solve" ? "Stop" : "Solve";
-  solveBtn.disabled = run?.kind !== "solve" && isSolved(board);
+  scrambleBtn.disabled = run?.kind === "solve";
+  solveBtn.disabled = run?.kind === "scramble" || (!running && isSolved(board));
+  sizeSelect.disabled = running;
+  uploadBtn.disabled = running;
+  recropBtn.disabled = running;
   scrambleBtn.classList.toggle("stop", run?.kind === "scramble");
   solveBtn.classList.toggle("stop", run?.kind === "solve");
 }
@@ -129,28 +144,19 @@ function showMessage(text: string): void {
 
 // ---- Controls --------------------------------------------------------------
 
-scrambleBtn.addEventListener("click", async () => {
-  if (run?.kind === "scramble") {
-    actionSeq++;
-    await stopRun();
-    return;
-  }
-  const seq = ++actionSeq;
-  await stopRun();
-  if (seq !== actionSeq) return;
+// During a run every other control is disabled, so pressing the run's own
+// button can only mean Stop. The board isn't usable again until it has.
+scrambleBtn.addEventListener("click", () => {
+  if (run) return void stopRun();
+  actionSeq++;
   const moves = generateScramble(board, n);
   startRun("scramble", moves, scrambleMoveDuration(moves.length));
 });
 
-solveBtn.addEventListener("click", async () => {
-  if (run?.kind === "solve") {
-    actionSeq++;
-    await stopRun();
-    return;
-  }
-  const seq = ++actionSeq;
-  await stopRun();
-  if (seq !== actionSeq || isSolved(board)) return;
+solveBtn.addEventListener("click", () => {
+  if (run) return void stopRun();
+  if (isSolved(board)) return;
+  actionSeq++;
   startRun("solve", solve(board, n), SOLVE_MOVE_MS);
 });
 
