@@ -90,7 +90,7 @@ select {
 }
 
 button:hover:not(:disabled),
-select:hover {
+select:hover:not(:disabled) {
   border-color: var(--accent);
 }
 
@@ -101,7 +101,8 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-button:disabled {
+button:disabled,
+select:disabled {
   opacity: 0.45;
   cursor: default;
 }
