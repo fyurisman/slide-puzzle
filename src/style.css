@@ -1,0 +1,255 @@
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --text: #1d1c22;
+  --muted: #6c6a75;
+  --border: #dedbe3;
+  --board-bg: #e4e1e8;
+  --accent: #5b3fd1;
+  --accent-text: #ffffff;
+  --stop: #c2364a;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.08);
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141318;
+    --surface: #1f1e25;
+    --text: #ecebf0;
+    --muted: #9a98a6;
+    --border: #34323d;
+    --board-bg: #2a2832;
+    --accent: #8b74f0;
+    --accent-text: #141318;
+    --stop: #ef6b7e;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  --board-size: min(calc(100vw - 32px), calc(100dvh - 260px), 560px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+}
+
+@media (max-height: 560px) {
+  .app {
+    --board-size: min(calc(100vw - 32px), 320px);
+  }
+}
+
+.header h1 {
+  margin: 8px 0 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.toolbar,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: var(--board-size);
+}
+
+.actions button {
+  flex: 1;
+}
+
+button,
+select {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+button:hover:not(:disabled),
+select:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  padding: 11px 20px;
+}
+
+button.primary.stop {
+  background: var(--stop);
+  border-color: var(--stop);
+}
+
+.size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* ---- Board ---------------------------------------------------------------- */
+
+.board {
+  --n: 4;
+  position: relative;
+  width: var(--board-size);
+  aspect-ratio: 1;
+  background: var(--board-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tile {
+  --col: 0;
+  --row: 0;
+  --dx: 0px;
+  --dy: 0px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% / var(--n));
+  height: calc(100% / var(--n));
+  background-size: calc(var(--n) * 100%) calc(var(--n) * 100%);
+  background-repeat: no-repeat;
+  transform: translate(calc(var(--col) * 100% + var(--dx)), calc(var(--row) * 100% + var(--dy)));
+  transition-property: transform;
+  transition-timing-function: ease-out;
+  clip-path: inset(1px round 4px);
+  cursor: grab;
+  will-change: transform;
+}
+
+.tile:active {
+  cursor: grabbing;
+}
+
+.message {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--stop);
+  text-align: center;
+  font-size: 0.9rem;
+  max-width: var(--board-size);
+}
+
+.footer {
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* ---- Crop dialog ---------------------------------------------------------- */
+
+.crop-dialog {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 20px;
+  width: min(calc(100vw - 32px), 480px);
+  max-height: calc(100dvh - 32px);
+  box-shadow: var(--shadow);
+}
+
+.crop-dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+
+.crop-dialog h2 {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+}
+
+.crop-frame {
+  width: min(100%, calc(100dvh - 260px));
+  margin: 0 auto;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--board-bg);
+}
+
+#crop-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+#crop-canvas:active {
+  cursor: grabbing;
+}
+
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+.zoom input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
