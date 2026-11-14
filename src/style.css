@@ -72,8 +72,68 @@ body {
   width: var(--board-size);
 }
 
-.actions button {
+.actions {
+  position: relative;
+}
+
+.actions > button {
   flex: 1;
+}
+
+/* ---- Scramble duration picker -------------------------------------------- */
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+.scramble-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 11;
+  max-width: 100%;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.scramble-menu[hidden] {
+  display: none;
+}
+
+.scramble-menu-title {
+  margin: 0 0 8px 2px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.scramble-options {
+  display: grid;
+  grid-template-columns: repeat(6, auto);
+  gap: 6px;
+}
+
+@media (max-width: 420px) {
+  .scramble-options {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.scramble-options button {
+  min-width: 52px;
+  padding: 8px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scramble-options button.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
 }
 
 button,

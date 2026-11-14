@@ -3,7 +3,13 @@ import { BoardView } from "./board-view";
 import { type CropRect, type CropSource, centerCrop, openCropEditor, renderCrop } from "./crop-editor";
 import { type Board, MAX_SIZE, MIN_SIZE, applyMove, isSolved, solvedBoard } from "./puzzle";
 import { drawSampleImage } from "./sample-image";
-import { SCRAMBLE_MOVE_MS, generateScramble } from "./scramble";
+import {
+  DEFAULT_SCRAMBLE_SECONDS,
+  SCRAMBLE_DURATIONS,
+  SCRAMBLE_MOVE_MS,
+  generateScramble,
+  scrambleMovesFor,
+} from "./scramble";
 import { SOLVE_MOVE_MS, solve } from "./solver";
 
 const DEFAULT_SIZE = 4;
@@ -18,6 +24,9 @@ const scrambleBtn = $<HTMLButtonElement>("scramble");
 const solveBtn = $<HTMLButtonElement>("solve");
 const messageEl = $<HTMLParagraphElement>("message");
 const countdownEl = $<HTMLParagraphElement>("countdown");
+const scrambleMenu = $<HTMLDivElement>("scramble-menu");
+const scrambleOptions = $<HTMLDivElement>("scramble-options");
+const menuBackdrop = $<HTMLDivElement>("menu-backdrop");
 
 // ---- State -----------------------------------------------------------------
 
@@ -148,9 +157,74 @@ function showMessage(text: string): void {
 // button can only mean Stop. The board isn't usable again until it has.
 scrambleBtn.addEventListener("click", () => {
   if (run) return void stopRun();
-  actionSeq++;
-  const moves = generateScramble(board, n);
-  startRun("scramble", moves, SCRAMBLE_MOVE_MS);
+  openScrambleMenu();
+});
+
+// ---- Scramble duration picker ---------------------------------------------
+
+const SECONDS_KEY = "slide-puzzle:scramble-seconds";
+
+/** Last chosen duration, remembered in this browser (storage may be blocked). */
+function rememberedSeconds(): number {
+  try {
+    const saved = Number(localStorage.getItem(SECONDS_KEY));
+    if ((SCRAMBLE_DURATIONS as readonly number[]).includes(saved)) return saved;
+  } catch {
+    /* fall through to the default */
+  }
+  return DEFAULT_SCRAMBLE_SECONDS;
+}
+
+function rememberSeconds(seconds: number): void {
+  try {
+    localStorage.setItem(SECONDS_KEY, String(seconds));
+  } catch {
+    /* not remembered; that's fine */
+  }
+}
+
+function openScrambleMenu(): void {
+  const selected = rememberedSeconds();
+  for (const btn of scrambleOptions.querySelectorAll<HTMLButtonElement>("button")) {
+    btn.classList.toggle("selected", Number(btn.dataset.seconds) === selected);
+  }
+  scrambleMenu.hidden = false;
+  menuBackdrop.hidden = false;
+  scrambleBtn.setAttribute("aria-expanded", "true");
+  scrambleOptions.querySelector<HTMLButtonElement>("button.selected")?.focus();
+}
+
+function closeScrambleMenu(): void {
+  if (scrambleMenu.hidden) return;
+  scrambleMenu.hidden = true;
+  menuBackdrop.hidden = true;
+  scrambleBtn.setAttribute("aria-expanded", "false");
+}
+
+for (const seconds of SCRAMBLE_DURATIONS) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = `${seconds} s`;
+  btn.dataset.seconds = String(seconds);
+  btn.addEventListener("click", () => {
+    closeScrambleMenu();
+    rememberSeconds(seconds);
+    actionSeq++;
+    startRun("scramble", generateScramble(board, n, scrambleMovesFor(seconds)), SCRAMBLE_MOVE_MS);
+  });
+  scrambleOptions.append(btn);
+}
+
+// A tap anywhere outside the menu (including on Scramble itself) only closes it.
+// Close on click (not pointerdown) so the whole tap lands on the backdrop and
+// nothing underneath sees the release.
+menuBackdrop.addEventListener("pointerdown", (e) => e.preventDefault());
+menuBackdrop.addEventListener("click", closeScrambleMenu);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !scrambleMenu.hidden) {
+    closeScrambleMenu();
+    scrambleBtn.focus();
+  }
 });
 
 solveBtn.addEventListener("click", () => {

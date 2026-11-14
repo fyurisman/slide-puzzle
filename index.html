@@ -29,9 +29,15 @@
       <p id="countdown" class="countdown" aria-label="Scramble time left"></p>
 
       <div class="actions">
-        <button id="scramble" type="button" class="primary">Scramble</button>
+        <button id="scramble" type="button" class="primary" aria-haspopup="true" aria-expanded="false" aria-controls="scramble-menu">Scramble</button>
         <button id="solve" type="button" class="primary">Solve</button>
+        <div id="scramble-menu" class="scramble-menu" role="dialog" aria-labelledby="scramble-menu-title" hidden>
+          <p id="scramble-menu-title" class="scramble-menu-title">Scramble for</p>
+          <div id="scramble-options" class="scramble-options"></div>
+        </div>
       </div>
+      <!-- While the scramble menu is open, this swallows any tap outside it. -->
+      <div id="menu-backdrop" class="menu-backdrop" hidden></div>
 
       <p id="message" class="message" role="status" aria-live="polite"></p>
 

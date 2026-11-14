@@ -2,16 +2,15 @@ import { type Board, gapCell, isSolved, neighbors } from "./puzzle";
 
 /** Pace of one scramble slide, in milliseconds. Same on every grid. */
 export const SCRAMBLE_MOVE_MS = 150;
-/** A scramble never takes longer than this in total. */
-export const SCRAMBLE_MAX_TOTAL_MS = 60_000;
-/** Most moves that fit in the cap at the fixed pace (400). */
-export const SCRAMBLE_MAX_MOVES = Math.floor(SCRAMBLE_MAX_TOTAL_MS / SCRAMBLE_MOVE_MS);
+/** Durations offered in the scramble picker, in seconds. */
+export const SCRAMBLE_DURATIONS = [10, 20, 30, 40, 50, 60] as const;
+export const DEFAULT_SCRAMBLE_SECONDS = 30;
 /** How often the gap steps toward its current target instead of anywhere. */
 const DRIFT = 0.9;
 
-/** Number of moves: 20 × N², limited to what fits in 60 s at 150 ms. */
-export function scrambleLength(n: number): number {
-  return Math.min(20 * n * n, SCRAMBLE_MAX_MOVES);
+/** Number of moves that fit in `seconds` at the fixed pace (60 s → 400). */
+export function scrambleMovesFor(seconds: number): number {
+  return Math.floor((seconds * 1000) / SCRAMBLE_MOVE_MS);
 }
 
 /**
@@ -28,7 +27,7 @@ export function scrambleLength(n: number): number {
 export function generateScramble(
   board: Board,
   n: number,
-  count: number = scrambleLength(n),
+  count: number,
   random: () => number = Math.random,
 ): number[] {
   const b = board.slice();

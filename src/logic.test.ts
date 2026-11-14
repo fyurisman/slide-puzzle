@@ -11,11 +11,10 @@ import {
   solvedBoard,
 } from "./puzzle";
 import {
-  SCRAMBLE_MAX_MOVES,
-  SCRAMBLE_MAX_TOTAL_MS,
-  generateScramble,
-  scrambleLength,
+  SCRAMBLE_DURATIONS,
   SCRAMBLE_MOVE_MS,
+  generateScramble,
+  scrambleMovesFor,
 } from "./scramble";
 import { isSolvable, solve } from "./solver";
 
@@ -82,15 +81,15 @@ describe("puzzle model", () => {
 });
 
 describe("scramble", () => {
-  it("uses 20 × N² moves, capped at 400", () => {
-    expect(SCRAMBLE_MAX_MOVES).toBe(400);
-    expect(sizes.map(scrambleLength)).toEqual([180, 320, 400, 400, 400, 400]);
-  });
-
-  it("runs at the same 150 ms pace on every grid and never exceeds 60 s", () => {
+  it("offers 10–60 s in 10 s steps at a fixed 150 ms per move", () => {
     expect(SCRAMBLE_MOVE_MS).toBe(150);
-    for (const n of sizes) {
-      expect(scrambleLength(n) * SCRAMBLE_MOVE_MS).toBeLessThanOrEqual(SCRAMBLE_MAX_TOTAL_MS);
+    expect([...SCRAMBLE_DURATIONS]).toEqual([10, 20, 30, 40, 50, 60]);
+    expect(SCRAMBLE_DURATIONS.map(scrambleMovesFor)).toEqual([66, 133, 200, 266, 333, 400]);
+    for (const seconds of SCRAMBLE_DURATIONS) {
+      const ms = scrambleMovesFor(seconds) * SCRAMBLE_MOVE_MS;
+      // Never longer than chosen, and the rounded-up countdown starts at it.
+      expect(ms).toBeLessThanOrEqual(seconds * 1000);
+      expect(Math.ceil(ms / 1000)).toBe(seconds);
     }
   });
 
@@ -103,7 +102,7 @@ describe("scramble", () => {
     let worst = 0;
     const trials = 200;
     for (let t = 0; t < trials; t++) {
-      const b = applyMoves(solvedBoard(n), n, generateScramble(solvedBoard(n), n, scrambleLength(n), random));
+      const b = applyMoves(solvedBoard(n), n, generateScramble(solvedBoard(n), n, scrambleMovesFor(60), random));
       const inPlace = b.filter((tile, cell) => tile === cell).length;
       total += inPlace;
       worst = Math.max(worst, inPlace);
@@ -117,8 +116,8 @@ describe("scramble", () => {
     for (const n of sizes) {
       for (let trial = 0; trial < 20; trial++) {
         const start = trial === 0 ? solvedBoard(n) : randomSolvableBoard(n, random);
-        const moves = generateScramble(start, n, scrambleLength(n), random);
-        expect(moves.length).toBeGreaterThanOrEqual(scrambleLength(n));
+        const moves = generateScramble(start, n, scrambleMovesFor(60), random);
+        expect(moves.length).toBeGreaterThanOrEqual(scrambleMovesFor(60));
         const b = start.slice();
         let previousGap = -1;
         for (const m of moves) {
@@ -161,7 +160,7 @@ describe("solver", () => {
     it(`solves ${n}×${n} boards produced by the scramble`, () => {
       const random = mulberry32(2000 + n);
       for (let trial = 0; trial < 10; trial++) {
-        const scrambled = applyMoves(solvedBoard(n), n, generateScramble(solvedBoard(n), n, scrambleLength(n), random));
+        const scrambled = applyMoves(solvedBoard(n), n, generateScramble(solvedBoard(n), n, scrambleMovesFor(60), random));
         expect(isSolved(playLegally(scrambled, n, solve(scrambled, n)))).toBe(true);
       }
     }, 120_000);
