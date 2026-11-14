@@ -10,7 +10,7 @@ Everything runs in the browser. Pictures are never uploaded to a server.
 - **Built-in sample**: an original generated artwork, so the page is playable straight away.
 - **Grid sizes**: 3×3 to 8×8. The bottom-right tile is the gap.
 - **Drag to slide**: drag a tile next to the gap (mouse or touch). Past halfway it snaps into the gap; otherwise it springs back. A tap also moves it.
-- **Scramble**: 20 × N² random legal moves, animated at 150 ms per slide, sped up when needed so a scramble never takes more than 60 s.
+- **Scramble**: random legal moves at the same 150 ms per slide on every grid. It uses 20 × N² moves, capped at 400 so a scramble never takes more than 60 s (3×3: 27 s, 4×4: 48 s, 5×5 and up: 60 s). The gap drifts toward the cells it has visited least recently, so even an 8×8 gets mixed all over with 400 moves.
 - **Solve**: a human-style solver that solves the top row, then the left column, shrinking the puzzle down to the final 2×2 corner. It plays every move at a steady 150 ms per slide.
 - While a scramble or solve is running, its button turns into **Stop** and every other control is disabled until you press it or the run ends. A scramble shows a countdown of the seconds left.
 

@@ -3,7 +3,7 @@ import { BoardView } from "./board-view";
 import { type CropRect, type CropSource, centerCrop, openCropEditor, renderCrop } from "./crop-editor";
 import { type Board, MAX_SIZE, MIN_SIZE, applyMove, isSolved, solvedBoard } from "./puzzle";
 import { drawSampleImage } from "./sample-image";
-import { generateScramble, scrambleMoveDuration } from "./scramble";
+import { SCRAMBLE_MOVE_MS, generateScramble } from "./scramble";
 import { SOLVE_MOVE_MS, solve } from "./solver";
 
 const DEFAULT_SIZE = 4;
@@ -150,7 +150,7 @@ scrambleBtn.addEventListener("click", () => {
   if (run) return void stopRun();
   actionSeq++;
   const moves = generateScramble(board, n);
-  startRun("scramble", moves, scrambleMoveDuration(moves.length));
+  startRun("scramble", moves, SCRAMBLE_MOVE_MS);
 });
 
 solveBtn.addEventListener("click", () => {

@@ -11,11 +11,11 @@ import {
   solvedBoard,
 } from "./puzzle";
 import {
-  SCRAMBLE_BASE_MS,
+  SCRAMBLE_MAX_MOVES,
   SCRAMBLE_MAX_TOTAL_MS,
   generateScramble,
   scrambleLength,
-  scrambleMoveDuration,
+  SCRAMBLE_MOVE_MS,
 } from "./scramble";
 import { isSolvable, solve } from "./solver";
 
@@ -82,20 +82,34 @@ describe("puzzle model", () => {
 });
 
 describe("scramble", () => {
-  it("uses 20 × N² moves", () => {
-    expect(scrambleLength(3)).toBe(180);
-    expect(scrambleLength(8)).toBe(1280);
+  it("uses 20 × N² moves, capped at 400", () => {
+    expect(SCRAMBLE_MAX_MOVES).toBe(400);
+    expect(sizes.map(scrambleLength)).toEqual([180, 320, 400, 400, 400, 400]);
   });
 
-  it("paces slides at 150 ms but never exceeds 60 s in total", () => {
+  it("runs at the same 150 ms pace on every grid and never exceeds 60 s", () => {
+    expect(SCRAMBLE_MOVE_MS).toBe(150);
     for (const n of sizes) {
-      const count = scrambleLength(n);
-      const ms = scrambleMoveDuration(count);
-      expect(ms).toBeLessThanOrEqual(SCRAMBLE_BASE_MS);
-      expect(ms * count).toBeLessThanOrEqual(SCRAMBLE_MAX_TOTAL_MS + 1e-6);
+      expect(scrambleLength(n) * SCRAMBLE_MOVE_MS).toBeLessThanOrEqual(SCRAMBLE_MAX_TOTAL_MS);
     }
-    expect(scrambleMoveDuration(180)).toBe(150);
-    expect(scrambleMoveDuration(1280)).toBeCloseTo(46.875);
+  });
+
+  it("mixes an 8×8 board thoroughly with only 400 moves", () => {
+    // A perfectly random shuffle leaves about 1 tile in place on average;
+    // a plain random walk of 400 moves leaves about 5.5 and up to ~16.
+    const random = mulberry32(42);
+    const n = 8;
+    let total = 0;
+    let worst = 0;
+    const trials = 200;
+    for (let t = 0; t < trials; t++) {
+      const b = applyMoves(solvedBoard(n), n, generateScramble(solvedBoard(n), n, scrambleLength(n), random));
+      const inPlace = b.filter((tile, cell) => tile === cell).length;
+      total += inPlace;
+      worst = Math.max(worst, inPlace);
+    }
+    expect(total / trials).toBeLessThan(3.5);
+    expect(worst).toBeLessThanOrEqual(12);
   });
 
   it("produces legal moves that never undo the previous one", () => {
